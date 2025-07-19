@@ -1,0 +1,125 @@
+🤔 What is ASGI?
+ASGI stands for Asynchronous Server Gateway Interface. It's like the new version of WSGI (which Flask uses). ASGI is made for handling asynchronous operations, meaning it can handle "multiple requests" at once without waiting for each to finish before starting the next.
+
+WSGI (Flask): One task at a time (like one barista).
+
+ASGI (FastAPI/Starlette): Multiple tasks at once (like multiple baristas).
+
+ASGI is useful for real-time apps, chat apps, or anything needing many simultaneous requests.
+
+--- Uvicorn -----
+
+What is uvicorn?
+uvicorn is an ASGI server. Think of it as the "engine" that runs your ASGI-based apps like FastAPI or Starlette.
+
+In the same way that a car engine powers a car, uvicorn powers ASGI apps by handling incoming requests and making sure the app responds to them efficiently.
+
+Uvicorn can accept multiple requests and pass them to the ASGI app simultaneously, without waiting for one to finish.
+
+The ASGI app (FastAPI) can process multiple requests concurrently, without blocking. Each request is handled in parallel thanks to asynchronous programming.
+
+Uvicorn then delivers multiple responses back to users in parallel.
+
+
+
+----- Dockerfile -----
+
+FROM python:3.11-slim -->	Uses a lightweight version of Python 3.11 as the base image. It's like setting up your kitchen with only essential utensils.
+
+WORKDIR /app -->	Creates a directory /app in the container and moves into it. Like stepping into your kitchen workspace.
+
+COPY . . -->	Copies everything from your local project into the container’s /app. Think of it like moving all your ingredients and tools to the kitchen counter.
+
+RUN pip install --no-cache-dir -r requirements.txt -->	Installs your app dependencies. --no-cache-dir saves space by not caching packages.
+
+EXPOSE 8000 -->	Tells Docker this container will communicate via port 8000. Like saying: "Hey! Take orders (requests) through this window!"
+
+CMD ["python", "app.py"] -->	Runs the Python app when the container starts. Like turning on the stove 🔥.
+
+
+Build the Docker image:
+> docker build -t my-flask-api .
+
+Run the container:
+> docker run -p 8000:8000 my-flask-api
+
+
+What is docker-compose.yml?
+🍱 Analogy:
+Suppose your app is not just one container. It’s a whole meal:
+
+Flask app = main course 🍝
+
+Database = side dish 🍟
+
+Redis = drink 🥤
+
+docker-compose.yml is like the restaurant order sheet 📝. It defines:
+
+What to serve (containers)
+
+How to serve it (ports, environment)
+
+How the dishes (containers) interact
+
+Run multi-container apps easily
+
+Just run docker-compose up to launch everything
+
+Manage configs like ports, volumes, env vars in one file
+
+================================================================
+
+Recommended Change:
+Replace:
+
+app.run()
+With:
+
+app.run(host='0.0.0.0', port=8000)
+
+💡 Why?
+By default, app.run() binds the Flask/Connexion server to 127.0.0.1, which is localhost inside the container — meaning it won’t be accessible from outside (like your browser or Postman).
+
+Binding to 0.0.0.0 allows it to listen on all network interfaces, making it reachable from your host system via the port mapping (-p 8000:8000).
+
+
+=========================================================================
+
+Why flask run Fails? ('''flask run''' )
+When you just run flask run, Flask tries to auto-discover the app.
+
+It looks for a file named app.py or wsgi.py.
+
+Inside that file, it looks for a variable named app (which must be a Flask instance).
+
+If Flask cannot find the app or misconfigures it, routes (from swagger.yaml) might not be registered correctly, causing 404 errors.
+
+
+
+==========================================================
+
+PORT FORWARDING
+
+Building = Computer/Server
+
+Rooms = Ports
+
+Party = App running on a port
+
+Reception = A layer (OS/Docker/K8s/router) that decides where visitors should be redirected.
+
+In real computers and networks, the "reception" is typically:
+
+The Operating System (OS) or Network Layer on your machine
+(for port-to-port forwarding)
+
+A Router or Firewall
+(for forwarding from public internet to your local server)
+
+Docker Engine
+(when you run -p 80:8000, Docker acts as the reception)
+
+Kubernetes Service/Ingress
+(it routes visitors from a Service port to the Pod’s actual port)
+

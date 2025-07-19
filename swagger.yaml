@@ -1,0 +1,111 @@
+openapi: "3.0.0"
+
+info:
+  title: Sample API
+  version: "1.0"
+
+components:
+  securitySchemes:
+    AccountIdAuth:
+      type: apiKey
+      in: header
+      name: Account-ID
+      description: |
+        Enter your Account-ID UUID here.
+        Example: `550e8400-e29b-41d4-a716-446655440000`
+
+  schemas:
+    ItemInput:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+          description: "Name of the item"
+        price:
+          type: number
+          description: "Price of the item"
+
+security:
+  - AccountIdAuth: []
+
+paths:
+  /items:
+    get:
+      operationId: items.get_items
+      responses:
+        "200":
+          description: List of items
+    post:
+      operationId: items.add_item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemInput'
+            example:
+              name: "Sample Item"
+              price: 123.45
+      responses:
+        "201":
+          description: Item created
+
+  /items/{item_id}:
+    get:
+      operationId: items.get_item
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item
+    put:
+      operationId: items.update_item
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemInput'
+            example:
+              name: "Updated Item"
+              price: 234.56
+      responses:
+        "200":
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  price:
+                    type: number
+        "404":
+          description: Item not found
+    delete:
+      operationId: items.delete_item
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Item deleted
