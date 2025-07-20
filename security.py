@@ -1,22 +1,27 @@
-from connexion.exceptions import OAuthProblem  # Exception used for authentication failures
+from connexion.exceptions import OAuthProblem  # Used to raise 401 Unauthorized errors
+import jwt  # PyJWT for decoding/encoding JWT tokens
 
-# A valid API key for demo purposes (in production, you'd check a database or external service)
-VALID_TOKEN = "valid-token-123"
+# Secret key for signing JWT tokens (use environment variables in real apps)
+SECRET_KEY = "mysecret"
 
-def verify_token(apikey, required_scopes=None):
+def decode_token(token):
     """
-    Connexion automatically calls this function when an endpoint requires JwtTokenAuth security.
-
-    :param apikey: The API key provided by the client (from 'x-access-token' header)
-    :param required_scopes: A list of scopes required by the endpoint (unused for API keys)
-    :return: A dictionary representing the authenticated user (if valid)
+    Connexion will call this function for every endpoint that requires JwtTokenAuth.
+    It receives the Bearer token (without the "Bearer " prefix).
+    
+    :param token: The JWT token provided in the Authorization header
+    :return: A dictionary with user info (if valid)
     """
-    print(f"API key received: {apikey}")
-    
-    # Check if the provided API key matches the valid token
-    if apikey != VALID_TOKEN:
-        # Raise OAuthProblem (Connexion returns a 401 Unauthorized response)
-        raise OAuthProblem("Invalid or missing API key")
-    
-    # Return a "user info" dictionary to indicate successful authentication
-    return {"sub": "user123"}
+    try:
+        # Decode the token using HS256 algorithm
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        print(f"Decoded token payload: {payload}")
+        
+        # Ensure the token has scopes (required for scope validation)
+        if "scope" not in payload:
+            raise OAuthProblem("Token missing scopes")
+        return payload  # Connexion expects a dictionary of claims
+    except jwt.ExpiredSignatureError:
+        raise OAuthProblem("Token has expired")
+    except jwt.InvalidTokenError:
+        raise OAuthProblem("Invalid token")
