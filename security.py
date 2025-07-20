@@ -1,19 +1,22 @@
-import uuid
-from connexion.exceptions import Unauthorized
+from connexion.exceptions import OAuthProblem  # Exception used for authentication failures
 
-def check_account_id(api_key=None, required_scopes=None):
-    print(f"Security check called with api_key: {api_key}")
+# A valid API key for demo purposes (in production, you'd check a database or external service)
+VALID_TOKEN = "valid-token-123"
 
-    if not api_key:
-        raise Unauthorized("No authorization token provided")
+def verify_token(apikey, required_scopes=None):
+    """
+    Connexion automatically calls this function when an endpoint requires JwtTokenAuth security.
 
-    try:
-        uuid.UUID(api_key)
-    except ValueError:
-        raise Unauthorized("Invalid Account-ID format")
-
-    VALID_ACCOUNT_ID = "550e8400-e29b-41d4-a716-446655440000"
-    if api_key == VALID_ACCOUNT_ID:
-        return {"sub": "authorized_user"}
-
-    raise Unauthorized("Unauthorized Account-ID")
+    :param apikey: The API key provided by the client (from 'x-access-token' header)
+    :param required_scopes: A list of scopes required by the endpoint (unused for API keys)
+    :return: A dictionary representing the authenticated user (if valid)
+    """
+    print(f"API key received: {apikey}")
+    
+    # Check if the provided API key matches the valid token
+    if apikey != VALID_TOKEN:
+        # Raise OAuthProblem (Connexion returns a 401 Unauthorized response)
+        raise OAuthProblem("Invalid or missing API key")
+    
+    # Return a "user info" dictionary to indicate successful authentication
+    return {"sub": "user123"}

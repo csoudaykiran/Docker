@@ -1,18 +1,16 @@
 openapi: "3.0.0"
 
 info:
-  title: Sample API
+  title: Items API with API Key Auth
   version: "1.0"
 
 components:
   securitySchemes:
-    AccountIdAuth:
-      type: apiKey
-      in: header
-      name: Account-ID
-      description: |
-        Enter your Account-ID UUID here.
-        Example: `550e8400-e29b-41d4-a716-446655440000`
+    JwtTokenAuth:
+      type: apiKey                 # Indicates we're using an API key
+      in: header                   # The key is passed via HTTP header
+      name: x-access-token         # Name of the header
+      x-apikeyInfoFunc: security.verify_token  # Function to validate API keys
 
   schemas:
     ItemInput:
@@ -23,89 +21,105 @@ components:
       properties:
         name:
           type: string
-          description: "Name of the item"
         price:
           type: number
-          description: "Price of the item"
-
-security:
-  - AccountIdAuth: []
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        price:
+          type: number
 
 paths:
   /items:
     get:
-      operationId: items.get_items
+      operationId: items.get_items   # Maps to items.py -> get_items()
+      security:
+        - JwtTokenAuth: []          # Requires a valid API key
       responses:
         "200":
           description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+
     post:
-      operationId: items.add_item
+      operationId: items.add_item    # Maps to items.py -> add_item()
+      security:
+        - JwtTokenAuth: []          # Requires a valid API key
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ItemInput'
-            example:
-              name: "Sample Item"
-              price: 123.45
       responses:
         "201":
           description: Item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
 
   /items/{item_id}:
     get:
-      operationId: items.get_item
+      operationId: items.get_item    # Maps to items.py -> get_item()
       parameters:
         - name: item_id
           in: path
           required: true
           schema:
             type: integer
+      security:
+        - JwtTokenAuth: []
       responses:
         "200":
-          description: Item
+          description: Item details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+
     put:
-      operationId: items.update_item
+      operationId: items.update_item  # Maps to items.py -> update_item()
       parameters:
         - name: item_id
           in: path
           required: true
           schema:
             type: integer
+      security:
+        - JwtTokenAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ItemInput'
-            example:
-              name: "Updated Item"
-              price: 234.56
       responses:
         "200":
           description: Item updated
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                  name:
-                    type: string
-                  price:
-                    type: number
-        "404":
-          description: Item not found
+                $ref: '#/components/schemas/Item'
+
     delete:
-      operationId: items.delete_item
+      operationId: items.delete_item  # Maps to items.py -> delete_item()
       parameters:
         - name: item_id
           in: path
           required: true
           schema:
             type: integer
+      security:
+        - JwtTokenAuth: []
       responses:
         "204":
           description: Item deleted
